@@ -4243,7 +4243,8 @@ ast::ParsedFilesOrCancelled Resolver::run(core::GlobalState &gs, vector<ast::Par
 }
 
 ast::ParsedFilesOrCancelled Resolver::runIncremental(core::GlobalState &gs, vector<ast::ParsedFile> trees,
-                                                     bool ranIncrementalNamer, WorkerPool &workers) {
+                                                     bool ranIncrementalNamer, WorkerPool &workers,
+                                                     std::vector<core::ClassOrModuleRef> symbolsToRecompute) {
     trees = ResolveConstantsWalk::resolveConstants(gs, std::move(trees), workers);
     // NOTE: Linearization does not need to be recomputed as we do not mutate mixins() during incremental resolve.
     verifyLinearizationComputed(gs);
@@ -4255,7 +4256,7 @@ ast::ParsedFilesOrCancelled Resolver::runIncremental(core::GlobalState &gs, vect
     // If we had a faster/incremental way to do finalizeSymbols, we could maybe start
     // unconditionally finalizing symbols again, and then the above note about lineraization would apply.
     if (ranIncrementalNamer) {
-        Resolver::finalizeSymbols(gs);
+        Resolver::finalizeSymbols(gs, &symbolsToRecompute);
     }
     auto hierarchyMayHaveChanged = ranIncrementalNamer;
     auto rtmafResult = ResolveTypeMembersAndFieldsWalk::run(gs, std::move(trees), workers, hierarchyMayHaveChanged);
